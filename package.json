@@ -1,0 +1,12 @@
+{ "name": "siobench",
+  "description": "Socket IO benchmarking tool",
+  "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url":  "git://github.com/mixu/siobench.git" },
+  "dependencies": {
+    "hsume2-socket.io":   "0.6.172",
+    "node-socket.io-client": "git+ssh://git@github.com:mixu/node-socket.io-client.git"
+  },
+ "private":true
+}
