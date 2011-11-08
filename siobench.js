@@ -12,6 +12,7 @@ if(process.argv.length > 2) {
   console.log('  -r   Rate of connections per second. Default: 0.');
   console.log('  -s   Size of messages to send, in bytes. Default: 32.');
   console.log('  -g   Write all measured values as a gnuplot (tab separated value) file.');
+  console.log('  -p   Number of processes to use in load generation.')
 }
 
 var options = {
@@ -44,6 +45,7 @@ var done = 0;
 function ramp() {
   if (clients.length < 50) {
     var index = current++;
+    var message_counter = 0;
     // store start time
     results[index] = { start: new Date() };
     var client = new io.Socket(opts.url, opts);
@@ -51,12 +53,19 @@ function ramp() {
     client.on('connect', function(){
       // ctime
       results[index].connect = new Date();
-      client.send(JSON.stringify({ msg: 'aaa' }));
+      client.send(JSON.stringify({ msg: message_counter++ }));
       console.log('Clients: '+clients.length);
     });
     client.on('message', function(){
-      results[index].message = new Date();
-      client.disconnect();
+      if(message_counter > 10) {
+        results[index].last_message = new Date();
+        client.disconnect();
+      } else {
+        if(message_counter == 1) {
+          results[index].first_message = new Date();
+        }
+        client.send(JSON.stringify({ msg: message_counter++ }));
+      }
     });
     client.on('disconnect', function(){
       // dtime
@@ -90,21 +99,21 @@ function end() {
   var lines = [];
   var re = new RegExp('([A-Za-z]+) ([A-Za-z]+) ([0-9]+) ([0-9]+) ([0-9:]+) ([A-Z\-0-9]+) ([\(\)A-Z]+)');
   results.forEach(function(result) {
-    // starttime = Date when connection started
     // seconds = unix time when connection started
-    var ctime = Math.floor(result.connect - result.start); // ctime = Connection time (connect - start)
-    var wait = Math.floor(result.message - result.start); // wait = Waiting time
+    var conntime = Math.floor(result.connect - result.start); // ctime = Connection time (connect - start)
+    var wait = Math.floor(result.first_message - result.connect); // wait = Waiting time
+    var work = Math.floor(result.last_message - result.first_message); // wait = Waiting time
     // (between request and reading response, e.g. first_message - start)
-    var dtime = Math.floor(result.done - result.start); // dtime = Processing time (done - start)
-    lines.push([result.start.toString().replace(re, '$1 $2 $3 $5 $4'), Math.floor(result.start.getTime() / 1000), ctime, dtime,
-      Math.floor(ctime + dtime), // ttime = Total time (ctime + dtime)
-      wait ]);
+    var disctime = Math.floor(result.done - result.last_message); // dtime = Processing time (done - start)
+    lines.push([Math.floor(result.start.getTime() / 1000), conntime, wait, work, disctime,
+      Math.floor(conntime + wait + work + disctime) // ttime = Total time (ctime + dtime)
+       ]);
   });
   lines = lines.sort(function(a, b) {
-    return a[4] - b[4]; // sort by ttime
+    return a[a.length - 1] - b[b.length - 1]; // sort by last column
   });
 
-  lines.unshift(['starttime','seconds','ctime','dtime','ttime','wait']);
+  lines.unshift(['seconds','connect','wait','work','disconnect','total']);
   var out = [];
   lines.forEach(function(line) {
     out.push(line.join('\t'));
@@ -113,4 +122,37 @@ function end() {
     console.log('Done');
     process.exit();
   });
+
+/*
+Concurrency Level:      10
+Time taken for tests:   14.793312 seconds
+Complete requests:      1000
+Failed requests:        0
+Write errors:           0
+Total transferred:      83608000 bytes
+HTML transferred:       83241000 bytes
+Requests per second:    67.60 [#/sec] (mean)
+Time per request:       147.933 [ms] (mean)
+Time per request:       14.793 [ms] (mean, across all concurrent requests)
+Transfer rate:          5519.25 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0   20 250.2      0    3000
+Processing:    53  126  52.7    120     317
+Waiting:       19   51  29.5     46     246
+Total:         53  147 260.2    120    3305
+
+Percentage of the requests served within a certain time (ms)
+  50%    120
+  66%    142
+  75%    159
+  80%    172
+  90%    198
+  95%    227
+  98%    282
+  99%    314
+ 100%   3305 (longest request)
+
+*/
 }

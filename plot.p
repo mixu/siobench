@@ -19,8 +19,13 @@ set xlabel "request"
 # y-axis label
 set ylabel "total time (ms)"
 
-# plot data from "out.dat" using column 9 with smooth sbezier lines
+# plot data from "out.dat" using column 6 with smooth sbezier lines
 # and title of "nodejs" for the given data
-plot "out.dat" using 9 smooth sbezier with lines title "sio"
+# plot "out.dat" using 2 smooth sbezier with lines title "connect",
+# plot "out.dat" using 3 smooth sbezier with lines title "wait", \
+# "out.dat" using 4 smooth sbezier with lines title "work", \
+# "out.dat" using 5 smooth sbezier with lines title "disconnect", \
+# "out.dat" using 6 smooth sbezier with lines title "total"
 
+plot "out.dat" using 6 smooth sbezier with lines title "total"
 
