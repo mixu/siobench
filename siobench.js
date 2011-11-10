@@ -1,4 +1,7 @@
-var fs = require('fs');
+var fs = require('fs'),
+    child_process = require('child_process');
+// npm
+var proc = require('getrusage');
 
 if(process.argv.length > 2) {
   console.log('Usage: node siobench.js [options] host port');
@@ -24,6 +27,25 @@ var options = {
   message_size: 32
 };
 
+var branches = {
+  '0.6.17': {
+    server: 'server_perf.js',
+    client: ''
+  }
+};
+
+function run(filename) {
+  var child = child_process.spawn('node', [filename], { cwd: __dirname });
+  child.stdout.on('data', function (data) { console.log(data.toString()); });
+  child.stderr.on('data', function (data) { console.log(data.toString()); });
+  child.on('exit', function(code, signal) { console.log('Child process exited', code, signal); });
+  console.log('Started child process.');
+  return child;
+}
+
+// run server
+var server = run(branches['0.6.17'].server);
+
 
 // SOCKET IO bench
 var io = require('node-socket.io-client');
@@ -40,6 +62,34 @@ var clients = [];
 var results = [];
 var current = 0;
 var done = 0;
+
+
+
+// we only calculate CPU time over the current interval
+var cpu = [];
+var usage = proc.usage();
+// store the current gettimeofday in microseconds
+var prev_total = usage.systime + usage.usertime;
+var prev = proc.gettimeofday();
+var start = prev;
+
+//
+function getCPU() {
+  var usage = proc.usage();
+  var current = proc.gettimeofday();
+  // total cpu time
+  var total = usage.systime + usage.usertime;
+  var elapsed_cpu = total - prev_total;
+  var elapsed_wall = current - prev;
+
+  console.log('CPU usage since last tick: ', (elapsed_cpu / elapsed_wall) * 100, '%' );
+  console.log('CPU usage total: ', (total / (current - start)) * 100, '%');
+  console.log(usage);
+  prev_total = total;
+  prev = current;
+}
+
+setInterval(getCPU, 1000);
 
 // continuously increase the number of clients
 function ramp() {
@@ -72,7 +122,7 @@ function ramp() {
       results[index].done = new Date();
       done++;
       if(done >= 50) {
-        end();
+//        end();
       }
     });
     client.connect();
@@ -120,6 +170,7 @@ function end() {
   })
   fs.writeFile('./out.dat', out.join('\n'), function() {
     console.log('Done');
+    server.exit();
     process.exit();
   });
 

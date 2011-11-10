@@ -5,8 +5,9 @@
     "type": "git",
     "url":  "git://github.com/mixu/siobench.git" },
   "dependencies": {
-    "hsume2-socket.io":   "0.6.172",
-    "node-socket.io-client": "git+ssh://git@github.com:mixu/node-socket.io-client.git"
+    "socket.io":   "0.6.17",
+    "node-socket.io-client": "git+ssh://git@github.com:mixu/node-socket.io-client.git",
+    "mixu-getrusage": "git+ssh://git@github.com:mixu/node-getrusage.git#master"
   },
  "private":true
 }
