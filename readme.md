@@ -15,6 +15,8 @@ Messages
   - From client to runner:
     - clients: total number of clients started
     - saturated: CPU usage over 80%
+  - From runner to server:
+    - exit: write the log and exit
 
 Logging will be done by the server.
 
