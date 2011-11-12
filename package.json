@@ -7,7 +7,8 @@
   "dependencies": {
     "socket.io":   "0.6.17",
     "node-socket.io-client": "git+ssh://git@github.com:mixu/node-socket.io-client.git",
-    "mixu-getrusage": "git+ssh://git@github.com:mixu/node-getrusage.git#master"
+    "mixu-getrusage": "git+ssh://git@github.com:mixu/node-getrusage.git#master",
+    "wormhole": "3.0.x"
   },
  "private":true
 }

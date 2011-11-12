@@ -2,6 +2,7 @@ var fs = require('fs'),
     child_process = require('child_process');
 // npm
 var proc = require('getrusage');
+var Wormhole = require('wormhole');
 
 if(process.argv.length > 2) {
   console.log('Usage: node siobench.js [options] host port');
@@ -43,136 +44,21 @@ function run(filename) {
   return child;
 }
 
-// run server
+// start the server to benchmark against
 var server = run(branches['0.6.17'].server);
 
-
-// SOCKET IO bench
-var io = require('node-socket.io-client');
-
-var opts = {
-  url: 'localhost',
-  transport: 'websocket',
-  secure: false,
-  port: 8000
-};
-
-
-var clients = [];
-var results = [];
-var current = 0;
-var done = 0;
-
-
-
-// we only calculate CPU time over the current interval
-var cpu = [];
-var usage = proc.usage();
-// store the current gettimeofday in microseconds
-var prev_total = usage.systime + usage.usertime;
-var prev = proc.gettimeofday();
-var start = prev;
-
-//
-function getCPU() {
-  var usage = proc.usage();
-  var current = proc.gettimeofday();
-  // total cpu time
-  var total = usage.systime + usage.usertime;
-  var elapsed_cpu = total - prev_total;
-  var elapsed_wall = current - prev;
-
-  console.log('CPU usage since last tick: ', (elapsed_cpu / elapsed_wall) * 100, '%' );
-  console.log('CPU usage total: ', (total / (current - start)) * 100, '%');
-  console.log(usage);
-  prev_total = total;
-  prev = current;
-}
-
-setInterval(getCPU, 1000);
-
-// continuously increase the number of clients
-function ramp() {
-  if (clients.length < 50) {
-    var index = current++;
-    var message_counter = 0;
-    // store start time
-    results[index] = { start: new Date() };
-    var client = new io.Socket(opts.url, opts);
-    clients.push(client);
-    client.on('connect', function(){
-      // ctime
-      results[index].connect = new Date();
-      client.send(JSON.stringify({ msg: message_counter++ }));
-      console.log('Clients: '+clients.length);
+// we want a pool of processes to generate load
+// create the server for load generation pool
+net.createServer(function (client) {
+    Wormhole(client, 'chat', function (msg) {
+        // All messages received from client over chat channel, such as
+        // {hello: 'World'}
     });
-    client.on('message', function(){
-      if(message_counter > 10) {
-        results[index].last_message = new Date();
-        client.disconnect();
-      } else {
-        if(message_counter == 1) {
-          results[index].first_message = new Date();
-        }
-        client.send(JSON.stringify({ msg: message_counter++ }));
-      }
-    });
-    client.on('disconnect', function(){
-      // dtime
-      results[index].done = new Date();
-      done++;
-      if(done >= 50) {
-//        end();
-      }
-    });
-    client.connect();
 
-  }
-};
-setInterval(ramp, 100);
+    // client.write now overloaded to encode data.
+    client.write('chat', {greet: 'Welcome to our server!'});
+}).listen(2122);
 
-// continously send a message
-/*
-function broadcast() {
-  clients.forEach( function(client) {
-    client.publish('test', { state: 'test1'});
-  });
-  console.log('messages: '+messagecount+' ('+clients.length+')');
-}
-
-setInterval(broadcast, 1000);
-*/
-
-// Mon Nov 07 17:44:10 2011
-
-function end() {
-  var lines = [];
-  var re = new RegExp('([A-Za-z]+) ([A-Za-z]+) ([0-9]+) ([0-9]+) ([0-9:]+) ([A-Z\-0-9]+) ([\(\)A-Z]+)');
-  results.forEach(function(result) {
-    // seconds = unix time when connection started
-    var conntime = Math.floor(result.connect - result.start); // ctime = Connection time (connect - start)
-    var wait = Math.floor(result.first_message - result.connect); // wait = Waiting time
-    var work = Math.floor(result.last_message - result.first_message); // wait = Waiting time
-    // (between request and reading response, e.g. first_message - start)
-    var disctime = Math.floor(result.done - result.last_message); // dtime = Processing time (done - start)
-    lines.push([Math.floor(result.start.getTime() / 1000), conntime, wait, work, disctime,
-      Math.floor(conntime + wait + work + disctime) // ttime = Total time (ctime + dtime)
-       ]);
-  });
-  lines = lines.sort(function(a, b) {
-    return a[a.length - 1] - b[b.length - 1]; // sort by last column
-  });
-
-  lines.unshift(['seconds','connect','wait','work','disconnect','total']);
-  var out = [];
-  lines.forEach(function(line) {
-    out.push(line.join('\t'));
-  })
-  fs.writeFile('./out.dat', out.join('\n'), function() {
-    console.log('Done');
-    server.exit();
-    process.exit();
-  });
 
 /*
 Concurrency Level:      10
