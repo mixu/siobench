@@ -1,5 +1,6 @@
 var fs = require('fs'),
-    child_process = require('child_process');
+    child_process = require('child_process'),
+    net = require('net');
 // npm
 var proc = require('getrusage');
 var Wormhole = require('wormhole');
@@ -30,34 +31,55 @@ var options = {
 
 var branches = {
   '0.6.17': {
-    server: 'server_perf.js',
-    client: ''
+    server: './bench/server.js',
+    client: './bench/client.js'
   }
 };
 
-function run(filename) {
-  var child = child_process.spawn('node', [filename], { cwd: __dirname });
-  child.stdout.on('data', function (data) { console.log(data.toString()); });
-  child.stderr.on('data', function (data) { console.log(data.toString()); });
+function run(params) {
+  var child = child_process.spawn('node', params, { cwd: __dirname });
+  child.stdout.on('data', function (data) { console.log(data.toString().replace('\n', '')); });
+  child.stderr.on('data', function (data) { console.log(data.toString().replace('\n', '')); });
   child.on('exit', function(code, signal) { console.log('Child process exited', code, signal); });
-  console.log('Started child process.');
+  console.log('Started process.');
   return child;
 }
 
 // start the server to benchmark against
-var server = run(branches['0.6.17'].server);
+var server = run(['./lib/server_controller.js', __dirname+'/bench/server.js' ]);
+
+var index = 0;
+var client_counts = [];
 
 // we want a pool of processes to generate load
 // create the server for load generation pool
 net.createServer(function (client) {
-    Wormhole(client, 'chat', function (msg) {
-        // All messages received from client over chat channel, such as
-        // {hello: 'World'}
-    });
 
-    // client.write now overloaded to encode data.
-    client.write('chat', {greet: 'Welcome to our server!'});
+  // Control channel handler
+  Wormhole(client, 'control', function (msg) {
+    console.log('RCV MESSAGE', msg);
+    if (!msg.cmd) {
+      return;
+    }
+    switch(msg.cmd) {
+      case 'status':
+        if(msg.mode == 'stopped') {
+          // start the client
+          client.write('control', { cmd: 'add'} );
+        }
+        break;
+      case 'clientCount':
+        client_counts[msg.id] = msg.count;
+        break;
+    }
+  });
+  // get the current mode from the client
+  client.write('control', { cmd: 'id', id: index++ });
+  client.write('control', { cmd: 'mode' });
 }).listen(2122);
+
+// start one client controller
+run(['./lib/client_controller.js', __dirname+'/bench/client.js' ]);
 
 
 /*
@@ -92,4 +114,4 @@ Percentage of the requests served within a certain time (ms)
  100%   3305 (longest request)
 
 */
-}
+

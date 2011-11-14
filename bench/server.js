@@ -1,32 +1,33 @@
 var http = require('http'),
       io = require('socket.io');
 
-var ServerController = require('./lib/server_controller.js');
-
-var server = http.createServer(function(req, res){
-    res.end('Server running');
-});
-
-server.listen(8000);
-
-var socket = io.listen(server);
-
-socket.on('connection', function(client){
-
-  BenchLog.clientConnect();
-
-  client.on('message', function(data){
-    client.send(data);
-
-    BenchLog.clientMessage();
-
+function createServer(Controller) {
+  var server = http.createServer(function(req, res){
+      res.end('Server running');
   });
-  client.on('disconnect', function(){
-    BenchLog.clientDisconnect();
+  server.listen(8000);
+  console.log('SIO server listening at 8000');
+
+  var socket = io.listen(server);
+  var counter = 0;
+  socket.on('connection', function(client){
+    var index = counter++;
+    Controller.clientConnect(index);
+
+    client.on('message', function(data){
+      client.send(data);
+
+      Controller.clientMessage(index);
+
+    });
+    client.on('disconnect', function(){
+      Controller.clientDisconnect(index);
+    });
   });
-});
 
-process.on('exit', function() {
-  BenchLog.serverExit();
-});
+  process.on('exit', function() {
+    Controller.serverExit();
+  });
+}
 
+module.exports = createServer;
