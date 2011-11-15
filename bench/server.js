@@ -24,9 +24,6 @@ function createServer(Controller) {
     });
   });
 
-  process.on('exit', function() {
-    Controller.serverExit();
-  });
 }
 
 module.exports = createServer;

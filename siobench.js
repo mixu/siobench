@@ -1,6 +1,7 @@
 var fs = require('fs'),
     child_process = require('child_process'),
-    net = require('net');
+    net = require('net'),
+    repl = require('repl');
 // npm
 var proc = require('getrusage');
 var Wormhole = require('wormhole');
@@ -54,57 +55,66 @@ var clients = [];
 // we want a pool of processes to generate load
 // create the server for load generation pool
 var prev_pegged = false;
-net.createServer(function (client) {
-  clients.push(client);
-  // Control channel handler
-  Wormhole(client, 'control', function (msg) {
-    // sadasda.asdasd = asdasd;
-    if (!msg.cmd) {
-      console.log('IGNORE');
-      return;
-    }
-    switch(msg.cmd) {
-      case 'clientCount':
-          console.log('[C]', msg);
-//        client_counts[msg.id] = msg.count;
-        if(msg.isPegged) {
-          if (msg.isPegged != prev_pegged) {
+
+var SB = { };
+
+SB.on = EventEmitter.prototype.on;
+SB.once = EventEmitter.prototype.once;
+SB.removeListerner = EventEmitter.prototype.removeListener;
+SB.removeAllListeners = EventEmitter.prototype.removeAllListeners;
+SB.emit = EventEmitter.prototype.emit;
+
+SB.init = function() {
+  net.createServer(function (client) {
+    clients.push(client);
+    // Control channel handler
+    Wormhole(client, 'control', function (msg) {
+      // sadasda.asdasd = asdasd;
+      if (!msg.cmd) {
+        console.log('IGNORE');
+        return;
+      }
+      switch(msg.cmd) {
+        case 'clientCount':
+            console.log('[C]', msg);
+  //        client_counts[msg.id] = msg.count;
+          if(msg.isPegged) {
+            if (msg.isPegged != prev_pegged) {
+            }
+            prev_pegged = msg.isPegged;
+          } else {
+            client.write('control', { cmd: 'add'} );
           }
-          prev_pegged = msg.isPegged;
-        } else {
-          client.write('control', { cmd: 'add'} );
-        }
-        break;
-      default:
-        console.log('RCV MESSAGE', msg);
-    }
-  });
-  // get the current mode from the client
-  client.write('control', { cmd: 'id', id: index++ });
-  client.write('control', { cmd: 'mode' });
-  client.write('control', { cmd: 'add'} );
-}).listen(2122);
+          break;
+        default:
+          console.log('RCV MESSAGE', msg);
+      }
+    });
+    // get the current mode from the client
+    client.write('control', { cmd: 'id', id: index++ });
+    client.write('control', { cmd: 'mode' });
+    client.write('control', { cmd: 'add'} );
+  }).listen(2122);
 
-// server channel
-net.createServer(function (srv) {
-  Wormhole(srv, 'control', function (msg) {
-    switch(msg.cmd) {
-      case 'cpu':
-        console.log('[S] isPegged', msg.isPegged);
+  // start one client controller
+  run(['./lib/client_controller.js', __dirname+'/bench/client.js' ]);
 
-        // use the 10-second averate to decide whether to add more load
+  // start a repl to make it easy to terminate the process
+  var r = repl.start('>', process.stdin);
+  r.context.s = {
+    exit: SB.exit
+  };
+};
 
+SB.exit = function() {
+  // send a client exit
 
-        break;
-      default:
-          console.log('RCV SRV MESSAGE', msg);
-    }
-  });
-}).listen(2123);
+  // send a server exit
+  // when done, terminate the process
+};
 
+SB.init();
 
-// start one client controller
-run(['./lib/client_controller.js', __dirname+'/bench/client.js' ]);
 
 
 /*
