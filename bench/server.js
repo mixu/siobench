@@ -15,9 +15,8 @@ function createServer(Controller) {
     Controller.clientConnect(index);
 
     client.on('message', function(data){
-      client.send(data);
-
       Controller.clientMessage(index);
+      client.send(data);
 
     });
     client.on('disconnect', function(){

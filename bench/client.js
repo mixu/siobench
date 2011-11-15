@@ -10,7 +10,6 @@ var opts = {
 };
 
 function createClient(index, controller) {
-  console.log('Create Client');
   var client = new io.Socket(opts.url, opts);
   var message_counter = 0;
   client.on('connect', function(){
