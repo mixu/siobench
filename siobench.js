@@ -2,6 +2,7 @@ var fs = require('fs'),
     child_process = require('child_process'),
     net = require('net'),
     repl = require('repl');
+var EventEmitter = require('events').EventEmitter;
 // npm
 var proc = require('getrusage');
 var Wormhole = require('wormhole');
@@ -49,9 +50,6 @@ function run(params) {
 // start the server to benchmark against
 var server = run(['./lib/server_controller.js', __dirname+'/bench/server.js' ]);
 
-var index = 0;
-var clients = [];
-
 // we want a pool of processes to generate load
 // create the server for load generation pool
 var prev_pegged = false;
@@ -64,9 +62,14 @@ SB.removeListerner = EventEmitter.prototype.removeListener;
 SB.removeAllListeners = EventEmitter.prototype.removeAllListeners;
 SB.emit = EventEmitter.prototype.emit;
 
+SB.clients = [];
+
 SB.init = function() {
   net.createServer(function (client) {
-    clients.push(client);
+    SB.clients.push({
+      client: client,
+      count: {}
+    });
     // Control channel handler
     Wormhole(client, 'control', function (msg) {
       // sadasda.asdasd = asdasd;
@@ -76,14 +79,12 @@ SB.init = function() {
       }
       switch(msg.cmd) {
         case 'clientCount':
-            console.log('[C]', msg);
-  //        client_counts[msg.id] = msg.count;
-          if(msg.isPegged) {
-            if (msg.isPegged != prev_pegged) {
-            }
-            prev_pegged = msg.isPegged;
-          } else {
-            client.write('control', { cmd: 'add'} );
+          SB.clients[msg.id].count = msg;
+          break;
+        case 'clientStopped':
+          if(!msg.isServerPegged) {
+            // not because server is pegged, so start another client
+            run(['./lib/client_controller.js', __dirname+'/bench/client.js' ]);
           }
           break;
         default:
@@ -91,16 +92,16 @@ SB.init = function() {
       }
     });
     // get the current mode from the client
-    client.write('control', { cmd: 'id', id: index++ });
+    client.write('control', { cmd: 'id', id: SB.clients.length-1 });
     client.write('control', { cmd: 'mode' });
-    client.write('control', { cmd: 'add'} );
+    client.write('control', { cmd: 'start'} );
   }).listen(2122);
 
   // start one client controller
   run(['./lib/client_controller.js', __dirname+'/bench/client.js' ]);
 
   // start a repl to make it easy to terminate the process
-  var r = repl.start('>', process.stdin);
+  var r = repl.start('>');
   r.context.s = {
     exit: SB.exit
   };

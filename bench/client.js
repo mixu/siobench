@@ -15,7 +15,7 @@ function createClient(index, controller) {
   client.on('connect', function(){
     controller.clientConnect(index);
 
-    client.send(JSON.stringify({ msg: message_counter++ }));
+//    client.send(JSON.stringify({ msg: message_counter++ }));
   });
   client.on('message', function(){
     controller.clientMessage(index);
