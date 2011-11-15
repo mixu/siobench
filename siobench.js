@@ -65,7 +65,7 @@ net.createServer(function (client) {
     }
     switch(msg.cmd) {
       case 'clientCount':
-          console.log('[C]', msg.count, 'isPegged', msg.isPegged);
+          console.log('[C]', msg);
 //        client_counts[msg.id] = msg.count;
         if(msg.isPegged) {
           if (msg.isPegged != prev_pegged) {
