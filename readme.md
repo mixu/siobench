@@ -20,6 +20,18 @@ Messages
 
 Logging will be done by the server.
 
+
+Actually:
+
+  - Runner starts server and client
+  - Client polls server load and own load
+  - When the client reaches it's max load, it stops listening to the server and launches another client
+  - Clients have a "stop permanently" mode that is triggered at 40% CPU
+  - When the server reaches it's max load, it informs the current client to stop
+  - The server "stop" is at 80% CPU
+
+
+
 Todo
 
   - CPU usage tracking (server side) vs concurrent clients
