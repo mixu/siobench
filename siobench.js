@@ -7,19 +7,16 @@ var EventEmitter = require('events').EventEmitter;
 var proc = require('getrusage');
 var Wormhole = require('wormhole');
 
-if(process.argv.length > 2) {
-  console.log('Usage: node siobench.js [options] host port');
+var environments = require('./bench/index.js');
+
+
+if(process.argv.length < 3) {
+
+  console.log('Usage: node siobench.js [env]');
   console.log('A tool for benchmarking your Socket.io server.');
   console.log('');
-  console.log('Available options:');
-  console.log('  -c   Number of concurrent requests to perform at one time. Default: 1.');
-  console.log('  -n   Total number of requests for the benchmarking session.');
-  console.log('  -m   Number of messages per connection. Default: 0.');
-  console.log('  -t   Transport to use: "websocket" or "xhr-polling".');
-  console.log('  -r   Rate of connections per second. Default: 0.');
-  console.log('  -s   Size of messages to send, in bytes. Default: 32.');
-  console.log('  -g   Write all measured values as a gnuplot (tab separated value) file.');
-  console.log('  -p   Number of processes to use in load generation.')
+  console.log('Available environments:');
+
 }
 
 var options = {
@@ -31,12 +28,6 @@ var options = {
   message_size: 32
 };
 
-var branches = {
-  '0.6.17': {
-    server: './bench/server.js',
-    client: './bench/client.js'
-  }
-};
 
 function run(params) {
   var child = child_process.spawn('node', params, { cwd: __dirname });
@@ -139,6 +130,16 @@ SB.init();
 
 
 /*
+
+  console.log('  -c   Number of concurrent requests to perform at one time. Default: 1.');
+  console.log('  -n   Total number of requests for the benchmarking session.');
+  console.log('  -m   Number of messages per connection. Default: 0.');
+  console.log('  -t   Transport to use: "websocket" or "xhr-polling".');
+  console.log('  -r   Rate of connections per second. Default: 0.');
+  console.log('  -s   Size of messages to send, in bytes. Default: 32.');
+  console.log('  -g   Write all measured values as a gnuplot (tab separated value) file.');
+  console.log('  -p   Number of processes to use in load generation.')
+
 Concurrency Level:      10
 Time taken for tests:   14.793312 seconds
 Complete requests:      1000

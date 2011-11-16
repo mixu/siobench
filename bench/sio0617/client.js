@@ -19,4 +19,9 @@ function createClient(index, controller) {
   return client;
 }
 
-module.exports = createClient;
+// some libraries use send, others use write etc.
+function sendMessage(client, str) {
+  client.send(str);
+}
+
+module.exports = { createClient: createClient, sendMessage: sendMessage };

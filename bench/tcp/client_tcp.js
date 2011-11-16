@@ -6,8 +6,13 @@ function createClient(index, controller) {
   });
   client.on('message', function(){ controller.clientMessage(index); });
   client.on('disconnect', function(){ controller.clientDisconnect(index); });
-//  client.connect(8000);
   return client;
 }
 
-module.exports = createClient;
+// some libraries use send, others use write etc.
+function sendMessage(client, str) {
+  client.write(str);
+}
+
+module.exports = { createClient: createClient, sendMessage: sendMessage };
+
