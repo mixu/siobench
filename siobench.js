@@ -48,7 +48,7 @@ function run(params) {
 }
 
 // start the server to benchmark against
-var server = run(['./lib/server_controller.js', __dirname+'/bench/server.js' ]);
+var server = run(['./lib/server_controller.js', __dirname+'/bench/server_tcp.js' ]);
 
 // we want a pool of processes to generate load
 // create the server for load generation pool
@@ -84,7 +84,7 @@ SB.init = function() {
         case 'clientStopped':
           if(!msg.isServerPegged) {
             // not because server is pegged, so start another client
-            run(['./lib/client_controller.js', __dirname+'/bench/client.js' ]);
+            run(['./lib/client_controller.js', __dirname+'/bench/client_tcp.js' ]);
           } else {
             console.log('SERVER PEGGED!');
             // now trigger the logging on the server side
@@ -105,7 +105,7 @@ SB.init = function() {
   }).listen(2122);
 
   // start one client controller
-  run(['./lib/client_controller.js', __dirname+'/bench/client.js' ]);
+  run(['./lib/client_controller.js', __dirname+'/bench/client_tcp.js' ]);
 
   // start a repl to make it easy to terminate the process
   var r = repl.start('>');
