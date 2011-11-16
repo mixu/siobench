@@ -1,132 +1,42 @@
-var fs = require('fs'),
-    child_process = require('child_process'),
-    net = require('net'),
-    repl = require('repl');
-var EventEmitter = require('events').EventEmitter;
-// npm
-var proc = require('getrusage');
-var Wormhole = require('wormhole');
-
 var environments = require('./bench/index.js');
-
+var series = require('./lib/series.js');
+var SB = require('./lib/bench_controller.js');
 
 if(process.argv.length < 3) {
-
   console.log('Usage: node siobench.js [env]');
   console.log('A tool for benchmarking your Socket.io server.');
   console.log('');
   console.log('Available environments:');
-
-}
-
-var options = {
-  concurrency: 2,
-  num_connections: 100,
-  num_messages: 10,
-  transport: 'xhr-polling',
-  rate: 10,
-  message_size: 32
-};
-
-
-function run(params) {
-  var child = child_process.spawn('node', params, { cwd: __dirname });
-  child.stdout.on('data', function (data) { console.log(data.toString().replace('\n', '')); });
-  child.stderr.on('data', function (data) { console.log(data.toString().replace('\n', '')); });
-  child.on('exit', function(code, signal) { console.log('Child process exited', code, signal); });
-  console.log('Started process.');
-  return child;
-}
-
-// start the server to benchmark against
-var server = run(['./lib/server_controller.js', __dirname+'/bench/server_tcp.js' ]);
-
-// we want a pool of processes to generate load
-// create the server for load generation pool
-var prev_pegged = false;
-
-var SB = { };
-
-SB.on = EventEmitter.prototype.on;
-SB.once = EventEmitter.prototype.once;
-SB.removeListerner = EventEmitter.prototype.removeListener;
-SB.removeAllListeners = EventEmitter.prototype.removeAllListeners;
-SB.emit = EventEmitter.prototype.emit;
-
-SB.clients = [];
-
-SB.init = function() {
-  net.createServer(function (client) {
-    SB.clients.push({
-      client: client,
-      count: {}
-    });
-    // Control channel handler
-    Wormhole(client, 'control', function (msg) {
-      // sadasda.asdasd = asdasd;
-      if (!msg.cmd) {
-        console.log('IGNORE');
-        return;
-      }
-      switch(msg.cmd) {
-        case 'clientCount':
-          SB.clients[msg.id].count = msg;
-          break;
-        case 'clientStopped':
-          if(!msg.isServerPegged) {
-            // not because server is pegged, so start another client
-            run(['./lib/client_controller.js', __dirname+'/bench/client_tcp.js' ]);
-          } else {
-            console.log('SERVER PEGGED!');
-            // now trigger the logging on the server side
-            sipc = net.createConnection(2123, function() {
-              Wormhole(sipc, 'control', function (msg) {});
-              sipc.write('control', { cmd: 'terminate' });
-            });
-          }
-          break;
-        default:
-          console.log('RCV MESSAGE', msg);
-      }
-    });
-    // get the current mode from the client
-    client.write('control', { cmd: 'id', id: SB.clients.length-1 });
-    client.write('control', { cmd: 'mode' });
-    client.write('control', { cmd: 'start'} );
-  }).listen(2122);
-
-  // start one client controller
-  run(['./lib/client_controller.js', __dirname+'/bench/client_tcp.js' ]);
-
-  // start a repl to make it easy to terminate the process
-  var r = repl.start('>');
-  r.context.s = {
-    s: SB.status,
-    status: SB.status,
-    exit: SB.exit
-  };
-};
-
-SB.status = function() {
-  console.log('Number of clients: ', SB.clients.length);
-  console.log('Client CPU usage:');
-  var total = 0;
-  SB.clients.forEach(function(o) {
-    total += o.count.count;
-    console.log( o.count);
+  Object.keys(environments).forEach(function(environment) {
+    console.log('\t'+environment);
   });
-  console.log('Total client connections', total);
-};
+  process.exit();
+}
 
-SB.exit = function() {
-  // send a client exit
+var tasks = [];
+process.argv.slice(2).forEach(function(spec) {
+  Object.keys(environments).forEach(function(environment) {
+    if(environment.indexOf(spec) > -1) {
+      var env = environments[spec];
+      tasks.push(function(next) {
+        console.log('Checking environment', environment);
 
-  // send a server exit
-  // when done, terminate the process
-};
+        var bench = new SB();
+        bench.on('done', function() {
+          next();
+        });
+        bench.start({
+          server: __dirname +'/'+ env.server,
+          client: __dirname +'/'+ env.client
+        });
+      });
+    }
+  });
+});
 
-SB.init();
-
+series(tasks, function() {
+  console.log('Benchmarks completed.');
+});
 
 
 /*
@@ -139,6 +49,14 @@ SB.init();
   console.log('  -s   Size of messages to send, in bytes. Default: 32.');
   console.log('  -g   Write all measured values as a gnuplot (tab separated value) file.');
   console.log('  -p   Number of processes to use in load generation.')
+var options = {
+  concurrency: 2,
+  num_connections: 100,
+  num_messages: 10,
+  transport: 'xhr-polling',
+  rate: 10,
+  message_size: 32
+};
 
 Concurrency Level:      10
 Time taken for tests:   14.793312 seconds

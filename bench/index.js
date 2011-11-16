@@ -4,7 +4,7 @@ module.exports = {
     client: './bench/sio0617/client.js'
   },
   'tcp': {
-    server: './bench/tcp/server.js',
-    client: './bench/tcp/client.js'
+    server: './bench/tcp/server_tcp.js',
+    client: './bench/tcp/client_tcp.js'
   }
 };
