@@ -85,6 +85,13 @@ SB.init = function() {
           if(!msg.isServerPegged) {
             // not because server is pegged, so start another client
             run(['./lib/client_controller.js', __dirname+'/bench/client.js' ]);
+          } else {
+            console.log('SERVER PEGGED!');
+            // now trigger the logging on the server side
+            sipc = net.createConnection(2123, function() {
+              Wormhole(sipc, 'control', function (msg) {});
+              sipc.write('control', { cmd: 'terminate' });
+            });
           }
           break;
         default:
@@ -103,8 +110,21 @@ SB.init = function() {
   // start a repl to make it easy to terminate the process
   var r = repl.start('>');
   r.context.s = {
+    s: SB.status,
+    status: SB.status,
     exit: SB.exit
   };
+};
+
+SB.status = function() {
+  console.log('Number of clients: ', SB.clients.length);
+  console.log('Client CPU usage:');
+  var total = 0;
+  SB.clients.forEach(function(o) {
+    total += o.count.count;
+    console.log( o.count);
+  });
+  console.log('Total client connections', total);
 };
 
 SB.exit = function() {
