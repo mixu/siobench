@@ -11,7 +11,7 @@ function createClient(index, controller) {
 
 // some libraries use send, others use write etc.
 function sendMessage(client, str) {
-  client.write(str);
+  client.writable && client.write(str);
 }
 
 module.exports = { createClient: createClient, sendMessage: sendMessage };

@@ -23,6 +23,7 @@ process.argv.slice(2).forEach(function(spec) {
 
         var bench = new SB();
         bench.on('done', function() {
+          console.log('SB = done');
           next();
         });
         bench.start({
@@ -36,6 +37,7 @@ process.argv.slice(2).forEach(function(spec) {
 
 series(tasks, function() {
   console.log('Benchmarks completed.');
+  process.exit(0);
 });
 
 
