@@ -4,12 +4,13 @@ Todo:
 - Limit bench runtime by total CPU time, not by peak usage
 - Recheck precision on getrusage
 
+Running:
 
-Notes:
+  node siobench.js [env]
 
-- You need to raise the hard file limit in either: /etc/limits.conf or /etc/security/limits.conf Recommended limit is > 20,000.
-- You need a lot of CPU cores to generate load. For example, I was unable to generate enough load for the pure tcp server with 4 cores. When this happens, you system slows down and the number of connections no longer increases quickly
+Before running:
 
-
-    sudo renice -n -19 -p
+- Go to each folder in ./bench/*/ and run npm install to get the dependencies for that benchmark.
+- Raise the hard file limit in either: /etc/limits.conf or /etc/security/limits.conf to around 32000
+- Make sure you have sufficient CPU cores to generate load. For example, I was unable to generate enough load for the pure tcp server with 4 cores. When this happens, you system slows down and the number of connections no longer increases quickly.
 
