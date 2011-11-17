@@ -1,4 +1,10 @@
 
+Todo:
+
+- Limit bench runtime by total CPU time, not by peak usage
+- Recheck precision on getrusage
+
+
 Notes:
 
 - You need to raise the hard file limit in either: /etc/limits.conf or /etc/security/limits.conf Recommended limit is > 20,000.
@@ -7,7 +13,3 @@ Notes:
 
     sudo renice -n -19 -p
 
-
-Todo
-
-  - Memory usage tracking (server side) vs concurrent clients

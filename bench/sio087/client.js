@@ -3,7 +3,8 @@
 var io = require('socket.io-client');
 
 var opts = {
-  transports: ['websocket']
+  transports: ['websocket'],
+  'force new connection': true // undocumented option
 };
 
 function createClient(index, controller) {
