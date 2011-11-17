@@ -5,9 +5,7 @@
     "type": "git",
     "url":  "git://github.com/mixu/siobench.git" },
   "dependencies": {
-    "socket.io":   "0.6.17",
-    "node-socket.io-client": "git+ssh://git@github.com:mixu/node-socket.io-client.git",
-    "mixu-getrusage": "git+ssh://git@github.com:mixu/node-getrusage.git#master",
+    "getrusage": "git+ssh://git@github.com:mixu/node-getrusage.git#master",
     "nodeunit": "0.5.x",
     "nodeunit-runner": "git+ssh://git@github.com:mixu/nodeunit-runner.git#master",
     "wormhole": "3.0.x"

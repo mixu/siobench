@@ -1,0 +1,9 @@
+{ "name": "bench0617",
+  "description": "Socket IO 0.6.17 benchmark ",
+  "version": "0.0.1",
+  "dependencies": {
+    "socket.io":   "0.6.17",
+    "node-socket.io-client": "git+ssh://git@github.com:mixu/node-socket.io-client.git"
+  },
+ "private":true
+}
