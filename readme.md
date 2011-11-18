@@ -12,4 +12,4 @@ Before running:
 
 Notes:
 
-- Can't, for the life of me, get XHR polling to work on with Socket.io when running natively on Node. This is probably a bug in the xmlhttprequest module, since after five connections the whole thing stalls, and the versions used are 0.2.1 for socket.io 0.6.17 and 0.2.2 for socket.io 0.8.7.
+- Can't, for the life of me, get XHR polling to work on with Socket.io when running natively on Node. This is probably a bug in the xmlhttprequest module, since after five connections the whole thing stalls, and the versions used are 0.2.1 for socket.io 0.6.17 and 0.2.2 for socket.io 0.8.7. The only way to make it run is to spam client processes, and only do 3 connects per process. Ugly.
