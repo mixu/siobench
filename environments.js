@@ -9,6 +9,11 @@ module.exports = {
     client: './bench/sio0617/client_poll.js',
     out: './results/sio0617poll/'
   },
+  '0.7.11': {
+    server: './bench/sio0711/server.js',
+    client: './bench/sio0711/client.js',
+    out: './results/sio0711/'
+  },
   '0.8.7': {
     server: './bench/sio087/server.js',
     client: './bench/sio087/client.js',

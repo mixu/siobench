@@ -37,8 +37,13 @@ process.argv.slice(2).forEach(function(spec) {
   });
 });
 
-series(tasks, function() {
-  console.log('Benchmarks completed.');
-  process.exit(0);
-});
+if(tasks.length == 0) {
+  console.log('No environments matching', process.argv.slice(2), 'found');
+} else {
+  series(tasks, function() {
+    console.log('Benchmarks completed.');
+    process.exit(0);
+  });
+}
+
 
