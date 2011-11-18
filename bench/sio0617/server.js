@@ -11,6 +11,7 @@ function createServer(Controller) {
   var socket = io.listen(server);
   var counter = 0;
   socket.on('connection', function(client){
+    console.log('CONNECTION', client.sessionId);
     var index = counter++;
     Controller.clientConnect(index);
 
@@ -20,6 +21,7 @@ function createServer(Controller) {
 
     });
     client.on('disconnect', function(){
+      console.log('DISCONNECT', client.sessionId);
       Controller.clientDisconnect(index);
     });
   });

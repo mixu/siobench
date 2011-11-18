@@ -11,7 +11,7 @@ var opts = {
 
 function createClient(index, controller) {
   var client = new io.Socket(opts.url, opts);
-  client.on('connect', function(){ controller.clientConnect(index); });
+  client.on('connect', function(){ console.log('Client connected', index); controller.clientConnect(index); });
   client.on('message', function(){ controller.clientMessage(index); });
   client.on('disconnect', function(){ controller.clientDisconnect(index); });
   client.connect();

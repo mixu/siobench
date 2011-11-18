@@ -2,6 +2,7 @@ var sio = require('socket.io');
 
 function createServer(Controller) {
   var io = sio.listen(8000);
+  io.set('log level', 1);
 
   console.log('SIO server listening at 8000');
 
