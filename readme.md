@@ -1,4 +1,20 @@
 
+# A benchmarking suite for Node pubsub servers
+
+The benchmark is rather simple. Clients connect one at a time, and a new client is only allowed to connect when the previous one is connected. When the server has used up 5000 milliseconds of CPU time, the benchmark is stopped. Every second, every connected client sends a single message which is echoed back by the server.
+
+See a writeup with graphs at:
+
+In more detail, the benchmark:
+
+- Runs a single server and a number of client processes which generate load.
+- Client processes are launched sequentially by the benchmark runner when the client process hits a particular level of CPU usage.
+- The number of clients, memory usage and CPU statistics are logged on the server side on each client connect.
+- The benchmark uses the native getrusage and gettimeofday functions via a Node native extension (which I forked from Dav Glass's node-getrusage) to get somewhat more accurate (microsecond) information about CPU usage and elapsed time.
+- CPU usage is logged on the server process only (e.g. getrusage(RUSAGE_SELF)), not the clients. In addition to the code being benchmarked, the server process only runs a small piece of IPC code.
+- The output is written to disk after the benchmark is over in a gnuplot-compatible format, which is where the graphs come from.
+
+
 Running:
 
   node siobench.js [env]
