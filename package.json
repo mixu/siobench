@@ -5,9 +5,9 @@
     "type": "git",
     "url":  "git://github.com/mixu/siobench.git" },
   "dependencies": {
-    "getrusage": "git+ssh://git@github.com:mixu/node-getrusage.git#master",
+    "getrusage": "git://github.com/mixu/node-getrusage.git#master",
     "nodeunit": "0.5.x",
-    "nodeunit-runner": "git+ssh://git@github.com:mixu/nodeunit-runner.git#master",
+    "nodeunit-runner": "git://github.com/mixu/nodeunit-runner.git#master",
     "wormhole": "3.0.x",
     "mkdirp": "0.2.x"
   },
